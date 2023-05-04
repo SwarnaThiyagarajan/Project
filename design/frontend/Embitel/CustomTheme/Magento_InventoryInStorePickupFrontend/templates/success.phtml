@@ -17,9 +17,9 @@
             $orderData = $order->getAllVisibleItems();
             $name = $order->getCustomerName();
             $subtotal = number_format($order->getSubtotal(), '2', '.', ',');
-            $currencyCode = $order->getOrderCurrencyCode();
-            $currencySymbol = $_objectManager->create('Magento\Directory\Model\Currency')->create()->load($currencyCode);
-            $currency = $currencySymbol->getCurrencySymbol();
+            $currency = $order->getOrderCurrencyCode();
+            // $currencySymbol = $_objectManager->create('Magento\Directory\Model\Currency')->create()->load($currencyCode);
+            // $currency = $currencySymbol->getCurrencySymbol();
             $shipping = number_format($order->getShippingAmount(), '2', '.', ',');
             $total = number_format($subtotal + $shipping, '2', '.', ',');
             ?>
