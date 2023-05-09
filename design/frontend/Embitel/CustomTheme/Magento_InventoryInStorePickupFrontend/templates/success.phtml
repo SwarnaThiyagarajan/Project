@@ -7,20 +7,18 @@
 ?>
 <div class="checkout-success">
     <?php if ($block->getOrderId()) : ?>
+        
         <?php if ($block->getCanViewOrder()) : 
             $id = $block->getOrderId();
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $order = $objectManager->create('Magento\Sales\Model\Order')->load($id);
-            $shippingAddress = $order->getShippingAddress();
-            $billingAddress = $order->getBillingAddress();
-            // $orderItem= $order->getAllItems();
+            $order = $block->getOrder();
+            $order = $block->getOrderById($id);
+            $shippingAddress = $block->getOrder()->getShippingAddress();
+            $billingAddress = $block->getOrder()->getBillingAddress();
             $orderData = $order->getAllVisibleItems();
-            $name = $order->getCustomerName();
-            $subtotal = number_format($order->getSubtotal(), '2', '.', ',');
-            $currency = $order->getOrderCurrencyCode();
-            // $currencySymbol = $_objectManager->create('Magento\Directory\Model\Currency')->create()->load($currencyCode);
-            // $currency = $currencySymbol->getCurrencySymbol();
-            $shipping = number_format($order->getShippingAmount(), '2', '.', ',');
+            $name = $block->getOrder()->getCustomerName();
+            $subtotal = number_format($block->getOrder()->getSubtotal(), '2', '.', ',');
+            $currency = $block->getOrder()->getOrderCurrencyCode();
+            $shipping = number_format($block->getOrder()->getShippingAmount(), '2', '.', ',');
             $total = number_format($subtotal + $shipping, '2', '.', ',');
             ?>
             <div>
@@ -33,9 +31,9 @@
             </div>
             <div>
                 <div>
-            <h2><?= $block->escapeHtml(__('Order # <span>%1</span>.', $id), ['span']) ?></h2>
+            <h2><span style="font-size:30px"><?= $block->escapeHtml(__('Order # <span>%1</span>', $id), ['span']) ?></h2>
             <div>
-            <h3><?= $block->escapeHtml(__('Items Ordered')) ?></h3>
+            <span style="font-size:20px"><?= $block->escapeHtml(__('Items Ordered')) ?>
         </div>
             <table class="data table table-order-items" id="my-orders-table">
             <caption class="table-caption"><?php echo(__('Items Ordered')) ?></caption>
@@ -52,38 +50,77 @@
                 <?php foreach ($orderData as $item) :?>
                     <tr>
                         <td><?= $block->escapeHtml(__($item->getName()), ['span']) ?>
-                        <?php $_product = $objectManager->create('Magento\Catalog\Model\Product')->loadByAttribute('sku', $item->getSku());
-                        ?>
-                        <?= $block->escapeHtml(__($_product->getSize()), ['span']) ?>
-                        <?= $block->escapeHtml(__($_product->getColor()), ['span']) ?>
-                        </td>
+                        <?php $productOptions = $item->getProductOptions();
+    if (isset($productOptions['attributes_info'])) :
+      foreach ($productOptions['attributes_info'] as $productOption) :?>
+        <p><strong><?= $block->escapeHtml(__($label = $productOption['label']), ['span']) ?></strong><br>
+        <?= $block->escapeHtml(__($value = $productOption['value']), ['span']) ?></p>
+ <?php
+      endforeach;
+    endif;
+        ?>
+                    </td>
                         <td><?= $block->escapeHtml(__($item->getSku()), ['span']) ?></td>
-                        <td><?= $block->escapeHtml(__($currency), ['span'])?><?= $block->escapeHtml(__(number_format($item->getPrice(), '2', '.', ','), ['span'])) ?></td>
+                        <td><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__(number_format($item->getPrice(), '2', '.', ','), ['span'])) ?></td>
                         <td><?= $block->escapeHtml(__('Ordered: <span>%1</span>',(int)$item->getQtyOrdered()), ['span']) ?></td>
-                        <td><strong><?= $block->escapeHtml(__($currency), ['span'])?>
+                        <td><strong><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?>
                         <?= $block->escapeHtml(__(number_format($item->getPrice()*$item->getQtyOrdered(), '2', '.', ',')), ['span']) ?></strong></td>
                     </tr>
+                    <?php $productType = $item->getProductType();
+
+if ($productType === \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE) :
+    // Get the bundle options for the item
+    $productOptions = $item->getProductOptions();
+    if (isset($productOptions['bundle_options'])) :
+        $bundleOptions = $productOptions['bundle_options'];
+        foreach ($bundleOptions as $bundleOption) :
+            $optionLabel = $bundleOption['label'];
+            $optionValues = $bundleOption['value'];?>
+            <tr>
+                <td colspan = "5"><strong><?= $block->escapeHtml(__($optionLabel), ['span']) ?></strong></td>
+        </tr>
+        <tr>
+            <td>
+            <?php
+            foreach ($optionValues as $option) :
+                $sku = $block->getProductSkuByName($option['title']);
+            ?>
+            <?= $block->escapeHtml(__($option['qty'] . ' x ' . $option['title'] . ' ' . $block->getCurrencySymbol($currency) . number_format($option['price']*$option['qty'], '2', '.', ',')), ['span']) ?>
+            </td>
+            <td>
+            <?= $block->escapeHtml(__($sku), ['span']) ?>
+            </td>
+            <td colspan = "3" align = "center"><?= $block->escapeHtml(__($option['qty']), ['span']) ?>
+            </td>
+            </tr>
+               <?php
+               endforeach;
+        endforeach;
+    endif;
+endif;?>
+                       
+        
                     <?php endforeach; ?>
             </tbody>
             <tfoot> 
                 <tr>
                     <td colspan ="4" align="right"><?= $block->escapeHtml(__('Subtotal'), ['span']) ?></th>
-                    <td><?= $block->escapeHtml(__($currency), ['span'])?><?= $block->escapeHtml(__($subtotal), ['span']) ?></td>
+                    <td><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__($subtotal), ['span']) ?></td>
                 </tr>
                 <tr>
                     <td colspan ="4" align="right"><?= $block->escapeHtml(__('Shipping & Handling'), ['span']) ?></th>
-                    <td><?= $block->escapeHtml(__($currency), ['span'])?><?= $block->escapeHtml(__($shipping), ['span']) ?></td>
+                    <td><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__($shipping), ['span']) ?></td>
                 </tr>
                 <tr>
                     <td colspan ="4" align="right"><strong><?= $block->escapeHtml(__('Grand Total'), ['span']) ?></strong></th>
-                    <td><strong><?= $block->escapeHtml(__($currency), ['span'])?><?= $block->escapeHtml(__($total), ['span']) ?></strong></td>
+                    <td><strong><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__($total), ['span']) ?></strong></td>
                 </tr>
                 </tfoot>
             </table>
             </div>
             <div>
                 <div>
-            <h3><?= $block->escapeHtml(__('Order Information')) ?></h3>
+            <span style="font-size:20px"><?= $block->escapeHtml(__('Order Information')) ?>
                 </div>
             <table class="data table table-order-details" id="my-order-detail-table">
                 <caption class="table-caption"><?= $block->escapeHtml(__('Order Information')) ?></caption>
@@ -122,7 +159,7 @@
                         <td>
                         <div class="box box-order-shipping-method">
                 <div class="box-content">
-                <?= $block->escapeHtml(__($order->getShippingDescription()), ['span']) ?>
+                <?= $block->escapeHtml(__($block->getOrder()->getShippingDescription()), ['span']) ?>
                 </div>
                 </div>
                         </td>
@@ -153,7 +190,7 @@
                         <td>
                         <div class="box box-order-payment-method">
                 <div class="box-content">
-                <?= $block->escapeHtml(__($order->getPayment()->getMethodInstance()->getTitle()), ['span']) ?>
+                <?= $block->escapeHtml(__($block->getOrder()->getPayment()->getMethodInstance()->getTitle()), ['span']) ?>
                 </div>
                 </div>
                         </td>
