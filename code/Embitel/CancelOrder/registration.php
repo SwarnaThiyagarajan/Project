@@ -8,4 +8,3 @@
     'Embitel_CancelOrder',
     __DIR__
 );
-?>

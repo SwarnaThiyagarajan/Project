@@ -12,8 +12,8 @@ class Index extends \Magento\Framework\App\Action\Action
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Sales\Model\Order $order)
-    {
+        \Magento\Sales\Model\Order $order
+    ) {
         $this->resultPageFactory = $resultPageFactory;
         $this->_order = $order;
         return parent::__construct($context);
@@ -24,7 +24,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $orderId = $this->getRequest()->getParam('orderid');
         $order = $this->_order->load($orderId);
-        if($order->canCancel()){
+        if ($order->canCancel()) {
             $order->cancel();
             $order->save();
             $this->messageManager->addSuccess(__('Order has been canceled successfully.'));
