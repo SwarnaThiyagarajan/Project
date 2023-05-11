@@ -11,7 +11,6 @@
         <?php if ($block->getCanViewOrder()) : 
             $id = $block->getOrderId();
             $order = $block->getOrder();
-            $order = $block->getOrderById($id);
             $shippingAddress = $block->getOrder()->getShippingAddress();
             $billingAddress = $block->getOrder()->getBillingAddress();
             $orderData = $order->getAllVisibleItems();
@@ -97,10 +96,8 @@ if ($productType === \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE) :
                endforeach;
         endforeach;
     endif;
-endif;?>
-                       
-        
-                    <?php endforeach; ?>
+endif;?>      
+                <?php endforeach; ?>
             </tbody>
             <tfoot> 
                 <tr>

@@ -168,11 +168,6 @@ class Success extends \Magento\Framework\View\Element\Template
     {
         return $this->_checkoutSession->getLastRealOrder();
     }
-//For fectching the configurable product details
-    public function getOrderById($orderId)
-    {
-        return  $this->orderRepository->get($orderId);
-    }
 //For fetching the currency symbol
     public function getCurrencySymbol($currencyCode)
     {
