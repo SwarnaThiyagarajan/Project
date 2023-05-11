@@ -1,0 +1,211 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+?>
+<div class="checkout-success">
+    <?php if ($block->getOrderId()) : ?>
+        
+        <?php if ($block->getCanViewOrder()) : 
+            $id = $block->getOrderId();
+            $order = $block->getOrder();
+            $shippingAddress = $block->getOrder()->getShippingAddress();
+            $billingAddress = $block->getOrder()->getBillingAddress();
+            $orderData = $order->getAllVisibleItems();
+            $name = $block->getOrder()->getCustomerName();
+            $subtotal = number_format($block->getOrder()->getSubtotal(), '2', '.', ',');
+            $currency = $block->getOrder()->getOrderCurrencyCode();
+            $shipping = number_format($block->getOrder()->getShippingAmount(), '2', '.', ',');
+            $total = number_format($subtotal + $shipping, '2', '.', ',');
+            ?>
+            <div>
+            <p><?= $block->escapeHtml(__('Your order number is: %1.', sprintf('<a href="%s" class="order-number"><strong>%s</strong></a>', $block->escapeUrl($block->getViewOrderUrl()), $block->getOrderId())), ['a', 'strong']) ?></p>
+            <?php if ($block->getIsOrderStorePickup()->execute()) : ?>
+            <p><?= $block->escapeHtml(__('We\'ll email you an order and pick-up confirmation with details.')) ?></p>
+        <?php else : ?>
+            <p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
+        <?php endif; ?>
+            </div>
+            <div>
+                <div>
+            <h2><span style="font-size:30px"><?= $block->escapeHtml(__('Order # <span>%1</span>', $id), ['span']) ?></h2>
+            <div>
+            <span style="font-size:20px"><?= $block->escapeHtml(__('Items Ordered')) ?>
+        </div>
+            <table class="data table table-order-items" id="my-orders-table">
+            <caption class="table-caption"><?php echo(__('Items Ordered')) ?></caption>
+            <thead>
+                <tr>
+                    <th scope="col" class="col name"><?= $block->escapeHtml(__('Product Name')) ?></th>
+                    <th scope="col" class="col sku"><?= $block->escapeHtml(__('SKU')) ?></th>
+                    <th scope="col" class="col price"><?= $block->escapeHtml(__('Price')) ?></th>
+                    <th scope="col" class="col qty"><?= $block->escapeHtml(__('Qty')) ?></th>
+                    <th scope="col" class="col subtotal"><?= $block->escapeHtml(__('Subtotal')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orderData as $item) :?>
+                    <tr>
+                        <td><?= $block->escapeHtml(__($item->getName()), ['span']) ?>
+                        <?php $productOptions = $item->getProductOptions();
+    if (isset($productOptions['attributes_info'])) :
+      foreach ($productOptions['attributes_info'] as $productOption) :?>
+        <p><strong><?= $block->escapeHtml(__($label = $productOption['label']), ['span']) ?></strong><br>
+        <?= $block->escapeHtml(__($value = $productOption['value']), ['span']) ?></p>
+ <?php
+      endforeach;
+    endif;
+        ?>
+                    </td>
+                        <td><?= $block->escapeHtml(__($item->getSku()), ['span']) ?></td>
+                        <td><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__(number_format($item->getPrice(), '2', '.', ','), ['span'])) ?></td>
+                        <td><?= $block->escapeHtml(__('Ordered: <span>%1</span>',(int)$item->getQtyOrdered()), ['span']) ?></td>
+                        <td><strong><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?>
+                        <?= $block->escapeHtml(__(number_format($item->getPrice()*$item->getQtyOrdered(), '2', '.', ',')), ['span']) ?></strong></td>
+                    </tr>
+                    <?php $productType = $item->getProductType();
+
+if ($productType === \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE) :
+    // Get the bundle options for the item
+    $productOptions = $item->getProductOptions();
+    if (isset($productOptions['bundle_options'])) :
+        $bundleOptions = $productOptions['bundle_options'];
+        foreach ($bundleOptions as $bundleOption) :
+            $optionLabel = $bundleOption['label'];
+            $optionValues = $bundleOption['value'];?>
+            <tr>
+                <td colspan = "5"><strong><?= $block->escapeHtml(__($optionLabel), ['span']) ?></strong></td>
+        </tr>
+        <tr>
+            <td>
+            <?php
+            foreach ($optionValues as $option) :
+                $sku = $block->getProductSkuByName($option['title']);
+            ?>
+            <?= $block->escapeHtml(__($option['qty'] . ' x ' . $option['title'] . ' ' . $block->getCurrencySymbol($currency) . number_format($option['price']*$option['qty'], '2', '.', ',')), ['span']) ?>
+            </td>
+            <td>
+            <?= $block->escapeHtml(__($sku), ['span']) ?>
+            </td>
+            <td colspan = "3" align = "center"><?= $block->escapeHtml(__($option['qty']), ['span']) ?>
+            </td>
+            </tr>
+               <?php
+               endforeach;
+        endforeach;
+    endif;
+endif;?>      
+                <?php endforeach; ?>
+            </tbody>
+            <tfoot> 
+                <tr>
+                    <td colspan ="4" align="right"><?= $block->escapeHtml(__('Subtotal'), ['span']) ?></th>
+                    <td><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__($subtotal), ['span']) ?></td>
+                </tr>
+                <tr>
+                    <td colspan ="4" align="right"><?= $block->escapeHtml(__('Shipping & Handling'), ['span']) ?></th>
+                    <td><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__($shipping), ['span']) ?></td>
+                </tr>
+                <tr>
+                    <td colspan ="4" align="right"><strong><?= $block->escapeHtml(__('Grand Total'), ['span']) ?></strong></th>
+                    <td><strong><?= $block->escapeHtml(__($block->getCurrencySymbol($currency)), ['span'])?><?= $block->escapeHtml(__($total), ['span']) ?></strong></td>
+                </tr>
+                </tfoot>
+            </table>
+            </div>
+            <div>
+                <div>
+            <span style="font-size:20px"><?= $block->escapeHtml(__('Order Information')) ?>
+                </div>
+            <table class="data table table-order-details" id="my-order-detail-table">
+                <caption class="table-caption"><?= $block->escapeHtml(__('Order Information')) ?></caption>
+            <thead>
+                <tr>
+                    <th scope="col" class="col shipping-address"><?= $block->escapeHtml(__('Shipping Address')) ?></th>
+                    <th scope="col" class="col shipping-method"><?= $block->escapeHtml(__('shipping Method')) ?></th>
+                    <th scope="col" class="col billing-address"><?= $block->escapeHtml(__('Billing Address')) ?></th>
+                    <th scope="col" class="col payment-method"><?= $block->escapeHtml(__('Payment Method')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                    <tr>
+                        <td>
+                        <div class="block-content">                    
+                <div class="box-content">
+                        <?php if ($shippingAddress) :               
+                $company = $shippingAddress->getData('company');
+                $street = $shippingAddress->getData('street');
+                $state = $shippingAddress->getData('region');
+                $city = $shippingAddress->getData('city');
+                $postcode = $shippingAddress->getData('postcode');
+                $telephone = $shippingAddress->getData('telephone');
+                $shippingaddress = $city . ', ' .$state . ' - ' . $postcode;
+                ?>
+                <?= $block->escapeHtml(__($name), ['span']) ?><br>
+                <?= $block->escapeHtml(__($company), ['span']) ?><br>
+                <?= $block->escapeHtml(__($street), ['span']) ?><br>
+                <?= $block->escapeHtml(__($shippingaddress), ['span']) ?><br>
+                <?= $block->escapeHtml(__($state), ['span']) ?><br>
+                <?= $block->escapeHtml(__('T :<span>%1</span>', $telephone), ['span']) ?>
+                <?php endif; ?>
+                        </div>
+                        </div>
+                        </td>
+                        <td>
+                        <div class="box box-order-shipping-method">
+                <div class="box-content">
+                <?= $block->escapeHtml(__($block->getOrder()->getShippingDescription()), ['span']) ?>
+                </div>
+                </div>
+                        </td>
+                        <td>
+                        
+                <?php if ($billingAddress) :     
+                $company = $billingAddress->getData('company');
+                $street = $billingAddress->getData('street');
+                $state = $billingAddress->getData('region');
+                $city = $billingAddress->getData('city');
+                $postcode = $billingAddress->getData('postcode');
+                $telephone = $billingAddress->getData('telephone');          
+                $billingaddress = $city . ', ' .$state . ' - ' . $postcode;
+                ?>
+                
+                <div class="box-content">
+                <?= $block->escapeHtml(__($name), ['span']) ?><br>
+                <?= $block->escapeHtml(__($company), ['span']) ?><br>
+                <?= $block->escapeHtml(__($street), ['span']) ?><br>
+                <?= $block->escapeHtml(__($billingaddress), ['span']) ?><br>
+                <?= $block->escapeHtml(__($state), ['span']) ?><br>
+                <?= $block->escapeHtml(__('T :<span>%1</span>', $telephone), ['span']) ?>
+                <?php endif; ?>
+                </div>
+            </div>
+                </div>
+                        </td>
+                        <td>
+                        <div class="box box-order-payment-method">
+                <div class="box-content">
+                <?= $block->escapeHtml(__($block->getOrder()->getPayment()->getMethodInstance()->getTitle()), ['span']) ?>
+                </div>
+                </div>
+                        </td>
+                        </tr>
+                </tbody>
+                </table>  
+                </div>         
+                <?php else : ?>
+            <p><?= $block->escapeHtml(__('Your order # is: <span>%1</span>.', $block->getOrderId()), ['span']) ?></p>
+        <?php endif; ?>
+    <?php endif; ?>
+
+    <?= $block->getAdditionalInfoHtml() ?>
+
+    <div class="actions-toolbar">
+        <div class="primary">
+            <a class="action primary continue"
+               href="<?= $block->escapeUrl($block->getContinueUrl()) ?>"><span><?= $block->escapeHtml(__('Continue Shopping')) ?></span></a>
+        </div>
+    </div>
+</div>
